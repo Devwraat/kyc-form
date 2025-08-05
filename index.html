@@ -51,7 +51,7 @@
       async function sendData(data) {
         const msg = document.getElementById('msg');
         try {
-          const res = await fetch('https://script.google.com/macros/s/AKfycbxoRT5UjaBj41K0ifJmumCXWHctTsXmW6FJ4kFI9DPzFuvCrBQ8oWrRxgwEPSiIHvSmMw/exec', {
+          const res = await fetch('https://script.google.com/macros/s/AKfycbwU4wpciT4Qlc9Pzax4uSAcNM56G30UCbsWgRpJI3KRxIgBRugRDTcr9wXmgAbO_cBwpQ/exec', {
             method: 'POST',
             body: JSON.stringify(data),
             headers: { 'Content-Type': 'application/json' }
@@ -66,4 +66,5 @@
   </script>
 </body>
 </html>
+
 
