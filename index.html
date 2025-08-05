@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Buyer KYC Form</title>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h2>Buyer KYC Form</h2>
+  <form id="kyc-form">
+    <label>Name:</label><br>
+    <input type="text" name="name" required><br><br>
+
+    <label>Phone:</label><br>
+    <input type="tel" name="phone" pattern="[0-9]{10}" required><br><br>
+
+    <label>Aadhaar:</label><br>
+    <input type="text" name="aadhaar" pattern="[2-9]{1}[0-9]{11}" required><br><br>
+
+    <label>PAN:</label><br>
+    <input type="text" name="pan" pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" required><br><br>
+
+    <label>Location:</label><br>
+    <input type="text" name="location" required><br><br>
+
+    <input type="hidden" id="ip" name="ip">
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    fetch("https://api.ipify.org?format=json")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("ip").value = data.ip;
+      });
+
+    document.getElementById("kyc-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const data = {};
+
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      fetch("https://script.google.com/macros/s/AKfycbyi5PuajL5iusy-ki-qh656EtQrJbztTGOgIMGEZ1R7XKeaaVfTMgrP5eEj-_Y3-CPaZw/exec", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }).then(res => {
+        document.getElementById("status").innerText = "Submitted successfully!";
+        e.target.reset();
+      }).catch(err => {
+        document.getElementById("status").innerText = "Error submitting!";
+      });
+    });
+  </script>
+</body>
+</html>
